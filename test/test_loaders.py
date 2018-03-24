@@ -10,7 +10,7 @@ class TestLoaders(unittest.TestCase):
 
     def setUp(self):
         # Test whether the resources folder exists
-        self.resources_path = 'resources'
+        self.resources_path = os.path.join(os.path.dirname(__file__), 'resources')
         self.json_path = os.path.join(self.resources_path, 'json_examples')
         assert os.path.exists(self.resources_path) and os.path.isdir(self.resources_path)
         assert os.path.exists(self.json_path) and os.path.isdir(self.json_path)
