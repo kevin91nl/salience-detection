@@ -34,6 +34,7 @@ class TestRelevantSentencesLoader(TestLoaders):
             example = loader.get_example(i)
             # Test the structure of the example (this should be tested at least once by one of the first assumptions)
             self.assertTrue('sentence' in example, 'The example should contain a "sentence" field.')
+            self.assertTrue('position' in example, 'The example should contain a "position" field.')
             self.assertTrue('is_relevant' in example, 'The example should contain a "is_relevant" field.')
             self.assertTrue(type(example['is_relevant']) == bool, 'The "is_relevant" field should be a boolean.')
 

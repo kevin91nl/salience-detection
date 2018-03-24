@@ -55,6 +55,7 @@ class RelevantSentencesLoader(DatasetMixin):
                 for index in range(len(text_sentences)):
                     example = {
                         'sentence': text_sentences[index],
+                        'position': index / float(len(text_sentences)),
                         'is_relevant': index in relevant_indices
                     }
                     self.dataset.append(example)
