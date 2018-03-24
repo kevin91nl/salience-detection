@@ -1,25 +1,10 @@
 import json
 import unittest
 
-from utils import compute_jaccard_index, is_valid_esd_json
+from utils.validators import is_valid_esd_json
 
 
-class TestUtils(unittest.TestCase):
-
-    def test_compute_jaccard_index(self):
-        # Expected value test
-        set1 = {'a', 'b', 'c'}
-        set2 = {'a', 'b', 'd'}
-        self.assertEqual(2. / (3. + 3. - 2.), compute_jaccard_index(set1, set2))
-
-        # Boundary test
-        set1 = {'a'}
-        set2 = set()
-        self.assertEqual(0., compute_jaccard_index(set1, set2))
-
-        # Error test
-        with self.assertRaises(ValueError) as _:
-            compute_jaccard_index(set(), set())
+class TestValidators(unittest.TestCase):
 
     def test_is_valid_esd_json(self):
         # It is a valid non-train/test document
@@ -105,7 +90,3 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(True, is_valid_esd_json(doc, is_train_document=False))
         except ValueError:
             self.fail('A ValueError was raised but should not.')
-
-
-if __name__ == '__main__':
-    unittest.main()
