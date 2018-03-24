@@ -22,14 +22,15 @@ class TestUtils(unittest.TestCase):
             compute_jaccard_index(set(), set())
 
     def test_is_valid_esd_json(self):
-        # It is a valid non train/test document
+        # It is a valid non-train/test document
         doc = {"text": "A text."}
         try:
             self.assertEqual(True, is_valid_esd_json(doc, is_train_document=False))
         except ValueError:
             self.fail('A ValueError was raised but should not.')
 
-        # It is not a valid train/test document since it contains no entities
+        # The next document is not a valid train/test document since it contains no entities field
+        doc = {"text": "A text.", "abstract": "Text."}
         with self.assertRaises(ValueError) as _:
             self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
 
@@ -41,31 +42,36 @@ class TestUtils(unittest.TestCase):
             is_valid_esd_json(doc, is_train_document=False)
 
         # This train/test document is not valid, since the "entities" are not a list
-        doc = {"text": "A text.", "entities": "Not a list."}
+        doc = {"text": "A text.", "abstract": "Text.", "entities": "Not a list."}
         with self.assertRaises(ValueError) as _:
             is_valid_esd_json(doc, is_train_document=True)
 
         # This is a valid train/test document
-        doc = {"text": "A text.", "entities": []}
+        doc = {"text": "A text.", "abstract": "Text.", "entities": []}
         try:
             self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
         except ValueError:
             self.fail('A ValueError was raised but should not.')
 
+        # This is not a valid train/test document since it has no abstract
+        doc = {"text": "A text.", "entities": []}
+        with self.assertRaises(ValueError) as _:
+            is_valid_esd_json(doc, is_train_document=True)
+
         # This is a valid train/test document
-        doc = {"text": "A text.", "entities": [{"entity": "Entity", "salience": True}]}
+        doc = {"text": "A text.", "abstract": "Text.", "entities": [{"entity": "Entity", "salience": True}]}
         try:
             self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
         except ValueError:
             self.fail('A ValueError was raised but should not.')
 
         # This is not a valid document, since one entity has no "salience" field
-        doc = {"text": "A text.", "entities": [{"entity": "Entity"}]}
+        doc = {"text": "A text.", "abstract": "Text.", "entities": [{"entity": "Entity"}]}
         with self.assertRaises(ValueError) as _:
             is_valid_esd_json(doc, is_train_document=True)
 
         # This is not a valid document, since one entity has no "entity" field
-        doc = {"text": "A text.", "entities": [{"salience": False}]}
+        doc = {"text": "A text.", "abstract": "Text.", "entities": [{"salience": False}]}
         with self.assertRaises(ValueError) as _:
             is_valid_esd_json(doc, is_train_document=True)
 
@@ -73,6 +79,7 @@ class TestUtils(unittest.TestCase):
         # Test the examples in the README file
         doc_str = """{
             "text": "This text is about dogs. Dogs are animals. Cats are also animals.",
+            "abstract": "Text about dogs.",
             "entities": [
                 {
                     "entity": "dogs",

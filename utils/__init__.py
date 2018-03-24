@@ -40,6 +40,8 @@ def is_valid_esd_json(data: dict, is_train_document: bool = False):
     ValueError
         If 'text' is not found in the data.
     ValueError
+        if 'abstract' is not found in the train/test data.
+    ValueError
         If 'entities' is not found in the train/test data.
     ValueError
         If data['entities'] is not a list in the train/test data.
@@ -49,15 +51,17 @@ def is_valid_esd_json(data: dict, is_train_document: bool = False):
         If there exists an entity without "entity" key.
     """
     if 'text' not in data:
-        raise ValueError('The "text" key is not found in the data.')
+        raise ValueError('The "text" field is not found in the data.')
     if is_train_document:
+        if 'abstract' not in data:
+            raise ValueError('The "abstract" field is not found in the train/test data.')
         if 'entities' not in data:
-            raise ValueError('The "entities" key is not found in the train/test data.')
+            raise ValueError('The "entities" field is not found in the train/test data.')
         if type(data['entities']) != list:
-            raise ValueError('The data["entities"] should be a list.')
+            raise ValueError('The "entities" field should be a list.')
         for entity in data['entities']:
             if 'salience' not in entity:
-                raise ValueError('There is an entity without "salience" key.')
+                raise ValueError('All entities should have a "salience" field.')
             if 'entity' not in entity:
-                raise ValueError('There is an entity without "entity" key.')
+                raise ValueError('All entities should have an "entity" field.')
     return True
