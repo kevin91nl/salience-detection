@@ -11,7 +11,7 @@ from util.text import compute_sentence_similarity
 
 class RelevantSentencesLoader(DatasetMixin):
 
-    def __init__(self, path, sent_tokenize, balance=False, seed=0):
+    def __init__(self, path, sent_tokenize, sent_to_features, balance=False, seed=0):
         """The file loader for the dataset files as described in the README.
 
         Parameters
@@ -22,6 +22,9 @@ class RelevantSentencesLoader(DatasetMixin):
         sent_tokenize : callable
             A method which takes a document (text) as input and produces a list of sentences found in the document as
             output.
+
+        sent_to_features : callable
+            A method which takes a sentence as input and produces features (a vector of embedding indices) as output.
 
         balance : bool, optional
             Whether to balance the dataset or not (default: False).
@@ -55,6 +58,7 @@ class RelevantSentencesLoader(DatasetMixin):
                 for index in range(len(text_sentences)):
                     example = {
                         'sentence': text_sentences[index],
+                        'features': sent_to_features(text_sentences[index]),
                         'position': index / float(len(text_sentences)),
                         'is_relevant': index in relevant_indices
                     }

@@ -17,7 +17,8 @@ class TestLoaders(unittest.TestCase):
 
     def test_nonexisting_path(self):
         with self.assertRaises(IOError):
-            RelevantSentencesLoader(os.path.join(self.resources_path, 'nonexisting_directory'), nltk.sent_tokenize)
+            RelevantSentencesLoader(os.path.join(self.resources_path, 'nonexisting_directory'), nltk.sent_tokenize,
+                                    lambda sent: sent)
 
 
 class TestRelevantSentencesLoader(TestLoaders):
@@ -27,19 +28,20 @@ class TestRelevantSentencesLoader(TestLoaders):
         nltk.download('punkt')
 
     def test_example_structure(self):
-        loader = RelevantSentencesLoader(self.json_path, nltk.sent_tokenize, balance=False)
+        loader = RelevantSentencesLoader(self.json_path, nltk.sent_tokenize, lambda sent: sent, balance=False)
         # There should be at least one example
         self.assertGreater(loader.__len__(), 0, 'There should be at least one example.')
         for i in range(loader.__len__()):
             example = loader.get_example(i)
             # Test the structure of the example (this should be tested at least once by one of the first assumptions)
             self.assertTrue('sentence' in example, 'The example should contain a "sentence" field.')
+            self.assertTrue('features' in example, 'The example should contain a "features" field.')
             self.assertTrue('position' in example, 'The example should contain a "position" field.')
             self.assertTrue('is_relevant' in example, 'The example should contain a "is_relevant" field.')
             self.assertTrue(type(example['is_relevant']) == bool, 'The "is_relevant" field should be a boolean.')
 
     def test_balanced_loader(self):
-        loader = RelevantSentencesLoader(self.json_path, nltk.sent_tokenize, balance=True)
+        loader = RelevantSentencesLoader(self.json_path, nltk.sent_tokenize, lambda sent: sent, balance=True)
         self.assertTrue(loader.__len__() % 2 == 0, 'There should be an even number of examples with balance=True.')
         # There should be at least one example
         self.assertGreater(loader.__len__(), 0, 'There should be at least one example.')
