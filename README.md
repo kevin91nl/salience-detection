@@ -1,4 +1,4 @@
-# Entity Salience Detection
+# Salience Detection
 
 ![Python 2.7](https://img.shields.io/badge/python-3.6-blue.svg) [![CircleCI](https://circleci.com/gh/kevin91nl/salience-detection/tree/master.svg?style=shield)](https://circleci.com/gh/kevin91nl/salience-detection/tree/master)
 
