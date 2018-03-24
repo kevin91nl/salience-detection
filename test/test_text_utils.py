@@ -1,9 +1,14 @@
 import unittest
 
+import nltk
+
 from util.text import clean_word, get_bow, compute_sentence_similarity
 
 
 class TestTextUtils(unittest.TestCase):
+
+    def setUp(self):
+        nltk.download('punkt')
 
     def test_clean_word(self):
         self.assertEqual('hello', clean_word('Héllo!'))

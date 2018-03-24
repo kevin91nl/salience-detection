@@ -22,6 +22,10 @@ class TestLoaders(unittest.TestCase):
 
 class TestRelevantSentencesLoader(TestLoaders):
 
+    def setUp(self):
+        super(TestRelevantSentencesLoader, self).setUp()
+        nltk.download('punkt')
+
     def test_example_structure(self):
         loader = RelevantSentencesLoader(self.json_path, nltk.sent_tokenize, balance=False)
         # There should be at least one example
