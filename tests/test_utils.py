@@ -1,3 +1,4 @@
+import json
 import unittest
 
 from utils import compute_jaccard_index, is_valid_esd_json
@@ -67,6 +68,36 @@ class TestUtils(unittest.TestCase):
         doc = {"text": "A text.", "entities": [{"salience": False}]}
         with self.assertRaises(ValueError) as _:
             is_valid_esd_json(doc, is_train_document=True)
+
+    def test_is_valid_esd_json_readme_example(self):
+        # Test the examples in the README file
+        doc_str = """{
+            "text": "This text is about dogs. Dogs are animals. Cats are also animals.",
+            "entities": [
+                {
+                    "entity": "dogs",
+                    "salience": true
+                },
+                {
+                    "entity": "cats",
+                    "salience": false
+                }
+            ]
+        }"""
+        doc = json.loads(doc_str)
+        try:
+            self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
+        except ValueError:
+            self.fail('A ValueError was raised but should not.')
+
+        doc_str = """{
+          "text": "This text is about dogs. Dogs are animals. Cats are also animals."
+        }"""
+        doc = json.loads(doc_str)
+        try:
+            self.assertEqual(True, is_valid_esd_json(doc, is_train_document=False))
+        except ValueError:
+            self.fail('A ValueError was raised but should not.')
 
 
 if __name__ == '__main__':
