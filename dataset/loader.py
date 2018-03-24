@@ -11,7 +11,8 @@ from util.text import compute_sentence_similarity
 
 class RelevantSentencesLoader(DatasetMixin):
 
-    def __init__(self, path, sent_tokenize, sent_to_features, balance=False, seed=0):
+    def __init__(self, path: str, sent_tokenize: callable, sent_to_features: callable, balance: bool = False,
+                 seed: int = 0):
         """The file loader for the dataset files as described in the README.
 
         Parameters
@@ -80,7 +81,7 @@ class RelevantSentencesLoader(DatasetMixin):
             np.random.shuffle(self.dataset)
 
     @staticmethod
-    def _compute_relevant_indices(text_sentences, abstract_sentences):
+    def _compute_relevant_indices(text_sentences: list, abstract_sentences: list) -> set:
         """Computes the indices of the sentences in the text which are relevant (i.e. the sentences that are described
         in the abstract).
 
@@ -93,8 +94,7 @@ class RelevantSentencesLoader(DatasetMixin):
 
         Returns
         -------
-        set
-            A set of indices such that for index i text_sentences[i] is relevant.
+        A set of indices such that for index i text_sentences[i] is relevant.
         """
         relevant_indices = set()
         for abstract_sentence in abstract_sentences:
@@ -109,8 +109,8 @@ class RelevantSentencesLoader(DatasetMixin):
                     relevant_indices.add(index)
         return relevant_indices
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.dataset)
 
-    def get_example(self, i):
+    def get_example(self, i: int) -> dict:
         return self.dataset[i]

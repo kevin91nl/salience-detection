@@ -1,4 +1,4 @@
-def is_valid_esd_json(data: dict, is_train_document: bool = False):
+def is_valid_esd_json(data: dict, is_train_document: bool = False) -> bool:
     """Test whether a dictionary (parsed JSON) adheres to the input data format as specified in the README file.
 
     Parameters

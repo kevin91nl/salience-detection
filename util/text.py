@@ -6,7 +6,7 @@ import unidecode
 from util.metric import compute_jaccard_index
 
 
-def compute_sentence_similarity(sentence1, sentence2):
+def compute_sentence_similarity(sentence1: str, sentence2: str) -> float:
     """Compute the similarity using the Jaccard index on the BOW model of both sentences.
 
     Parameters
@@ -25,7 +25,7 @@ def compute_sentence_similarity(sentence1, sentence2):
     return compute_jaccard_index(bow1, bow2)
 
 
-def get_bow(sentence):
+def get_bow(sentence: str) -> set:
     """Compute the Bag-of-Words (BOW) set of a sentence.
 
     Parameters
@@ -41,7 +41,7 @@ def get_bow(sentence):
     return {clean_word(word) for word in words if len(clean_word(word)) > 0}
 
 
-def clean_word(word):
+def clean_word(word: str) -> str:
     """Clean a word: remove any non-alphabetic character of the lower-cased version of the word and remove any accents.
 
     Parameters
@@ -51,6 +51,32 @@ def clean_word(word):
 
     Returns
     -------
-    Cleaned word.
+    str
+        Cleaned word.
     """
     return re.sub(r'[^a-z]+', '', unidecode.unidecode(word).lower())
+
+
+def word_to_hash(word: str, vocab_size: int) -> int:
+    """Compute a hash for a word.
+
+    Parameters
+    ----------
+    word : str
+        Word to compute the hash for.
+
+    vocab_size : int
+        The maximum number of words in the vocab.
+
+    Returns
+    -------
+    int
+        The hash such that 0 <= hash < vocab_size.
+    """
+    cleaned_word = clean_word(word)
+    hash_sum = 0
+    for i, char in enumerate(list(cleaned_word)):
+        # 997 is a large prime number (larger than the value of the ord() method)
+        hash_sum += (997 * (i + 1) * ord(char)) % vocab_size
+        hash_sum = hash_sum % vocab_size
+    return hash_sum

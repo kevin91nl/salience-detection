@@ -1,4 +1,4 @@
-def compute_jaccard_index(set1: set, set2: set):
+def compute_jaccard_index(set1: set, set2: set) -> float:
     """Given two sets, compute the Jaccard index.
 
     Parameters
