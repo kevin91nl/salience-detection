@@ -43,7 +43,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            python -m unittest discover -s tests
+            python -m unittest discover -s test
 
       - store_artifacts:
           path: test-reports

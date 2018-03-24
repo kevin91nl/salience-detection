@@ -1,9 +1,9 @@
 import unittest
 
-from utils.metrics import compute_jaccard_index
+from util.metric import compute_jaccard_index
 
 
-class TestMetrics(unittest.TestCase):
+class TestMetricUtils(unittest.TestCase):
 
     def test_compute_jaccard_index(self):
         # Expected value test

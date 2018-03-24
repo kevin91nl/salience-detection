@@ -1,0 +1,18 @@
+{
+  "text": "This is a text about coffee. Coffee is made from coffee beans. Developers love coffee.",
+  "abstract": "This text is about coffee.",
+  "entities": [
+    {
+      "entity": "coffee",
+      "salience": true
+    },
+    {
+      "entity": "coffee beans",
+      "salience": false
+    },
+    {
+      "entity": "Developers",
+      "salience": false
+    }
+  ]
+}

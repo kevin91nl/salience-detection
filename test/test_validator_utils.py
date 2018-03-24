@@ -1,10 +1,10 @@
 import json
 import unittest
 
-from utils.validators import is_valid_esd_json
+from dataset.validator import is_valid_esd_json
 
 
-class TestValidators(unittest.TestCase):
+class TestValidatorUtils(unittest.TestCase):
 
     def test_is_valid_esd_json(self):
         # It is a valid non-train/test document

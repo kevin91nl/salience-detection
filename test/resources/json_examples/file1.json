@@ -1,0 +1,18 @@
+{
+  "text": "This is a text. This text is about dogs. Dogs are animals. Cats are also animals.",
+  "abstract": "This text is about dogs which are animals.",
+  "entities": [
+    {
+      "entity": "text",
+      "salience": true
+    },
+    {
+      "entity": "dogs",
+      "salience": true
+    },
+    {
+      "entity": "cats",
+      "salience": false
+    }
+  ]
+}
