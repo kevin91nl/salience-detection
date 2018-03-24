@@ -76,7 +76,7 @@ def word_to_hash(word: str, vocab_size: int) -> int:
     cleaned_word = clean_word(word)
     hash_sum = 0
     for i, char in enumerate(list(cleaned_word)):
-        # 997 is a large prime number (larger than the value of the ord() method)
+        # A large prime number is used for better pseudo-randomness approximation
         hash_sum += (i * ord(char) * 104729) % vocab_size
         hash_sum = hash_sum % vocab_size
     return hash_sum
