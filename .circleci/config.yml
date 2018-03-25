@@ -32,7 +32,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install codecov coverage
+            pip install codecov==2.0.15 coverage==3.6
             pip install -r requirements.txt
 
       - save_cache:
