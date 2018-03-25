@@ -44,8 +44,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            python -m unittest discover -s test
-            coverage combine
+            coverage run -m unittest discover -s test/
             codecov
 
       - store_artifacts:
