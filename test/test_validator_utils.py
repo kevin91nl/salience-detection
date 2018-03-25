@@ -9,10 +9,7 @@ class TestValidatorUtils(unittest.TestCase):
     def test_is_valid_esd_json(self):
         # It is a valid non-train/test document
         doc = {"text": "A text."}
-        try:
-            self.assertEqual(True, is_valid_esd_json(doc, is_train_document=False))
-        except ValueError:
-            self.fail('A ValueError was raised but should not.')
+        self.assertEqual(True, is_valid_esd_json(doc, is_train_document=False))
 
         # The next document is not a valid train/test document since it contains no entities field
         doc = {"text": "A text.", "abstract": "Text."}
@@ -33,10 +30,7 @@ class TestValidatorUtils(unittest.TestCase):
 
         # This is a valid train/test document
         doc = {"text": "A text.", "abstract": "Text.", "entities": []}
-        try:
-            self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
-        except ValueError:
-            self.fail('A ValueError was raised but should not.')
+        self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
 
         # This is not a valid train/test document since it has no abstract
         doc = {"text": "A text.", "entities": []}
@@ -45,10 +39,7 @@ class TestValidatorUtils(unittest.TestCase):
 
         # This is a valid train/test document
         doc = {"text": "A text.", "abstract": "Text.", "entities": [{"entity": "Entity", "salience": True}]}
-        try:
-            self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
-        except ValueError:
-            self.fail('A ValueError was raised but should not.')
+        self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
 
         # This is not a valid document, since one entity has no "salience" field
         doc = {"text": "A text.", "abstract": "Text.", "entities": [{"entity": "Entity"}]}
@@ -77,16 +68,10 @@ class TestValidatorUtils(unittest.TestCase):
             ]
         }"""
         doc = json.loads(doc_str)
-        try:
-            self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
-        except ValueError:
-            self.fail('A ValueError was raised but should not.')
+        self.assertEqual(True, is_valid_esd_json(doc, is_train_document=True))
 
         doc_str = """{
           "text": "This text is about dogs. Dogs are animals. Cats are also animals."
         }"""
         doc = json.loads(doc_str)
-        try:
-            self.assertEqual(True, is_valid_esd_json(doc, is_train_document=False))
-        except ValueError:
-            self.fail('A ValueError was raised but should not.')
+        self.assertEqual(True, is_valid_esd_json(doc, is_train_document=False))

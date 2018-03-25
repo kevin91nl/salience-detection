@@ -24,7 +24,3 @@ class TestRSDModel(unittest.TestCase):
         row_sums = np.sum(scores, axis=1)
         for row_sum in row_sums:
             self.assertEqual(1.0, row_sum)
-
-
-if __name__ == '__main__':
-    unittest.main()

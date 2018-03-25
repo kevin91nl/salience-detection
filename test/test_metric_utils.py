@@ -19,7 +19,3 @@ class TestMetricUtils(unittest.TestCase):
         # Error test
         with self.assertRaises(ValueError) as _:
             compute_jaccard_index(set(), set())
-
-
-if __name__ == '__main__':
-    unittest.main()

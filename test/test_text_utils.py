@@ -28,7 +28,3 @@ class TestTextUtils(unittest.TestCase):
         # Here, the assumption is that the collision rate is extremely small. In that case, we can assume that
         # hash('word') != hash('different').
         self.assertNotEqual(word_to_hash('word', 100000), word_to_hash('different', 100000))
-
-
-if __name__ == '__main__':
-    unittest.main()

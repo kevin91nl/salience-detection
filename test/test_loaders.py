@@ -59,7 +59,3 @@ class TestRelevantSentencesLoader(TestLoaders):
     def test_max_files(self):
         loader = RelevantSentencesLoader(self.json_path, nltk.sent_tokenize, lambda sent: sent, max_files=0)
         self.assertEqual(0, loader.__len__())
-
-
-if __name__ == '__main__':
-    unittest.main()
