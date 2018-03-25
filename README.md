@@ -1,6 +1,6 @@
 # Salience Detection
 
-![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg) [![CircleCI](https://circleci.com/gh/kevin91nl/salience-detection/tree/master.svg?style=shield)](https://circleci.com/gh/kevin91nl/salience-detection/tree/master) [![Coverage Status](https://coveralls.io/repos/github/kevin91nl/salience-detection/badge.svg)](https://coveralls.io/github/kevin91nl/salience-detection)
+![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg) [![CircleCI](https://circleci.com/gh/kevin91nl/salience-detection/tree/master.svg?style=shield)](https://circleci.com/gh/kevin91nl/salience-detection/tree/master) [![codecov](https://codecov.io/gh/kevin91nl/salience-detection/branch/master/graph/badge.svg)](https://codecov.io/gh/kevin91nl/salience-detection)
 
 The goal of this project is to detect salient entities in text documents.
 
