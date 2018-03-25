@@ -12,7 +12,7 @@ from util.text import compute_sentence_similarity
 class RelevantSentencesLoader(DatasetMixin):
 
     def __init__(self, path: str, sent_tokenize: callable, sent_to_features: callable, balance: bool = False,
-                 seed: int = 0):
+                 seed: int = 0, max_files: int=-1):
         """The file loader for the dataset files as described in the README.
 
         Parameters
@@ -33,6 +33,9 @@ class RelevantSentencesLoader(DatasetMixin):
         seed : int, optional
             Seed used for shuffling during balancing (only used when balance=True, default: 0).
 
+        max_files : int, optional
+            The maximum number of files used, -1 for no maximum (default: -1).
+
         Raises
         ------
         ValueError
@@ -41,6 +44,8 @@ class RelevantSentencesLoader(DatasetMixin):
         if not os.path.isdir(path):
             raise IOError('The path "%s" is not a directory.' % path)
         files = os.listdir(path)
+        if max_files != -1:
+            files = files[:max_files]
 
         # Create a list containing the dataset
         self.dataset = []
