@@ -60,7 +60,10 @@ class RelevantSentencesLoader(DatasetMixin):
                 is_valid_esd_json(file_data, is_train_document=True)
                 text_sentences = sent_tokenize(text)
                 abstract_sentences = sent_tokenize(abstract)
-                relevant_indices = self._compute_relevant_indices(text_sentences, abstract_sentences)
+                try:
+                    relevant_indices = self._compute_relevant_indices(text_sentences, abstract_sentences)
+                except ValueError:
+                    continue
                 for index in range(len(text_sentences)):
                     example = {
                         'sentence': text_sentences[index],

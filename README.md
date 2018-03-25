@@ -38,3 +38,21 @@ For evaluating a document, only the `text` field is required:
 ```
 
 The entities and salience information are determined by the model.
+
+## Relevant Sentence Detection (RSD) model
+
+The first model is the relevant sentence detection (RSD) model. This model computes a relevance score for each sentence and reflects whether the sentence is relevant for the abstract of the text or not. The model is useful for text compression.
+
+### Train the model
+
+In order to train the model, execute the following script:
+
+```
+python train_rsd_model.py [train_path] [test_path] [out_path]
+```
+
+The `train_path` argument should point to a directory containing input files used for training. The `test_path` argument should point to a directory containing input files used for testing and the `out_path` should be an empty directory in which the model files, log files and plot files should be stored. All model parameters are configurable. The parameters are explained by the help function which can be found by executing the following code:
+
+```
+python train_rsd_model.py --help
+```
