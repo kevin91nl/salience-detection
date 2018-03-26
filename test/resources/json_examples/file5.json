@@ -1,0 +1,10 @@
+{
+  "text": "Duplicate sentence. Duplicate sentence.",
+  "abstract": "Sentence.",
+  "entities": [
+    {
+      "entity": "sentence",
+      "salience": true
+    }
+  ]
+}
