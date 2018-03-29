@@ -73,22 +73,26 @@ class TestEntitySalienceLoader(TestLoaders):
     def test_nonexisting_path(self):
         with self.assertRaises(IOError):
             EntitySalienceLoader(os.path.join(self.resources_path, 'nonexisting_directory'), nltk.sent_tokenize,
+                                 nltk.word_tokenize,
                                  lambda sent: sent)
 
     def test_max_files(self):
-        loader = EntitySalienceLoader(self.json_path, nltk.sent_tokenize, lambda sent: sent, max_files=0)
+        loader = EntitySalienceLoader(self.json_path, nltk.sent_tokenize, lambda sent: sent, nltk.word_tokenize,
+                                      max_files=0)
         self.assertEqual(0, loader.__len__())
 
     def test_example_structure(self):
-        loader = EntitySalienceLoader(self.json_path, nltk.sent_tokenize, lambda sent: sent, balance=True)
+        loader = EntitySalienceLoader(self.json_path, nltk.sent_tokenize, nltk.word_tokenize,
+                                      lambda word: word_to_hash(word, 100),
+                                      balance=True)
         # There should be at least one example
         self.assertGreater(loader.__len__(), 0, 'There should be at least one example.')
         for i in range(loader.__len__()):
             example = loader.get_example(i)
+            print(example)
             # Test the structure of the example (this should be tested at least once by one of the first assumptions)
-            self.assertTrue('entity' in example, 'The example should contain an "entity" field.')
-            self.assertTrue('sentences' in example, 'The example should contain a "sentences" field.')
-            self.assertTrue('features' in example, 'The example should contain a "features" field.')
+            self.assertTrue('entity_features' in example, 'The example should contain an "entity_features" field.')
+            self.assertTrue('sentence_features' in example, 'The example should contain a "sentence_features" field.')
             self.assertTrue('is_salient' in example, 'The example should contain an "is_salient" field.')
             self.assertTrue(type(example['is_salient']) == bool, 'The "is_salient" field should be a boolean.')
 
@@ -98,7 +102,7 @@ class TestEntitySalienceLoader(TestLoaders):
 
     def test_rsd_model(self):
         model = RSD(10, 8, 8, 0.5)
-        EntitySalienceLoader(self.json_path, nltk.sent_tokenize, lambda sent: sent,
+        EntitySalienceLoader(self.json_path, nltk.sent_tokenize, nltk.word_tokenize, lambda sent: sent,
                              rsd_model=model,
                              rsd_sent_to_features=TestEntitySalienceLoader._sentence_to_features,
                              rsd_threshold=0.5)
@@ -106,7 +110,7 @@ class TestEntitySalienceLoader(TestLoaders):
     def test_rsd_model_no_method_specified(self):
         model = RSD(8, 8, 8, 0.5)
         with self.assertRaises(ValueError):
-            EntitySalienceLoader(self.json_path, nltk.sent_tokenize, lambda sent: sent,
+            EntitySalienceLoader(self.json_path, nltk.sent_tokenize, nltk.word_tokenize, lambda sent: sent,
                                  rsd_model=model,
                                  rsd_sent_to_features=None,
                                  rsd_threshold=0.5)

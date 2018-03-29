@@ -150,9 +150,11 @@ class RelevantSentencesLoader(DatasetMixin):
 
 class EntitySalienceLoader(DatasetMixin):
 
-    def __init__(self, path: str, sent_tokenize: callable, sent_to_features: callable, rsd_model: RSD = None,
+    def __init__(self, path: str, sent_tokenize: callable, word_tokenize: callable, word_to_features: callable,
+                 rsd_model: RSD = None,
                  rsd_threshold: float = 0.0, rsd_sent_to_features: callable = None, balance: bool = False,
-                 seed: int = 0, max_files: int = -1, remove_duplicate_sentences: bool = True):
+                 seed: int = 0, max_files: int = -1, remove_duplicate_sentences: bool = True,
+                 insert_eos_marker: bool = True, insert_eop_marker: bool = True):
         """The file loader for the dataset files for the entity salience task.
 
         Parameters
@@ -164,8 +166,12 @@ class EntitySalienceLoader(DatasetMixin):
             A method which takes a document (text) as input and produces a list of sentences found in the document as
             output.
 
-        sent_to_features : callable
-            A method which takes a sentence as input and produces features (a vector of embedding indices) as output.
+        word_tokenize : callable
+            A method which takes a sentence (text) as input and produces a list of words found in the sentence as
+            output.
+
+        word_to_features : callable
+            A method which takes a word as input and produces features (a vector of embedding indices) as output.
 
         rsd_model : RSD, optional
             A trained RSD model (default: None).
@@ -189,6 +195,9 @@ class EntitySalienceLoader(DatasetMixin):
         remove_duplicate_sentences : bool, optional
             When True, duplicate sentences are removed from the input (default: True).
 
+        insert_eos_marker : bool, optional
+            When True, an End-of-Sentence (EOS) marker is added to the end of every sentence (default: True).
+
         Raises
         ------
         ValueError
@@ -205,6 +214,22 @@ class EntitySalienceLoader(DatasetMixin):
         # Create a list containing the dataset
         self.dataset = []
 
+        # Store the arguments
+        self.sent_tokenize = sent_tokenize
+        self.word_tokenize = word_tokenize
+        self.rsd_model = rsd_model
+        self.rsd_threshold = rsd_threshold
+        self.rsd_sent_to_features = rsd_sent_to_features
+        self.insert_eop_marker = insert_eop_marker
+        self.insert_eos_marker = insert_eos_marker
+        self.remove_duplicate_sentences = remove_duplicate_sentences
+        self.word_to_features = word_to_features
+
+        if self.rsd_model is not None:
+            if self.rsd_sent_to_features is None:
+                raise ValueError(
+                    'The rsd_model is specified, but the rsd_sent_to_features method is not specified.')
+
         progressbar = tqdm(files)
         for file in progressbar:
             progressbar.set_description(file)
@@ -213,35 +238,27 @@ class EntitySalienceLoader(DatasetMixin):
                 file_data = json.load(input_file)
                 text, entities = file_data['text'], file_data['entities']
                 is_valid_esd_json(file_data, is_train_document=True)
-                text_sentences = sent_tokenize(text)
-                if remove_duplicate_sentences:
-                    text_sentences = EntitySalienceLoader._remove_duplicate_sentences(text_sentences)
-
-                # Now filter out sentences using the RSD model
-                if rsd_model is not None:
-                    if rsd_sent_to_features is None:
-                        raise ValueError(
-                            'The rsd_model is specified, but the rsd_sent_to_features method is not specified.')
-                    scores = rsd_model.predict([rsd_sent_to_features(sentence) for sentence in text_sentences]).data
-                    scores = scores[:, 1]
-                    text_sentences = [sentence for sentence, score in zip(text_sentences, scores) if
-                                      score >= rsd_threshold]
-
-                # Skip if no sentence were found
-                if len(text_sentences) == 0:
-                    continue
 
                 for entity in entities:
                     example = {
-                        'entity': entity,
-                        'sentences': text_sentences,
-                        'features': [sent_to_features(sentence) for sentence in text_sentences],
+                        '_path': file_path,
+                        'entity': entity['entity'],
                         'is_salient': entity['salience']
                     }
                     self.dataset.append(example)
 
         if balance:
             self.dataset = balance_dataset(self.dataset, 'is_salient', seed)
+
+    @staticmethod
+    def _insert_markers(text_sentences, insert_eos_marker, insert_eop_marker, word_tokenize):
+        text_sentences = [sentence for sentence in text_sentences if len(sentence) > 0]
+        eos_marker = ['<EOS>'] if insert_eos_marker else []
+        words = [word_tokenize(sentence) + eos_marker for sentence in text_sentences]
+        if insert_eop_marker:
+            words += [['<EOP>']]
+            text_sentences += ['EOP']
+        return words, text_sentences
 
     @staticmethod
     def _remove_duplicate_sentences(sentences: list) -> list:
@@ -267,4 +284,33 @@ class EntitySalienceLoader(DatasetMixin):
         return len(self.dataset)
 
     def get_example(self, i: int) -> dict:
-        return self.dataset[i]
+        example = self.dataset[i]
+
+        with open(example['_path'], 'r') as input_file:
+            file_data = json.load(input_file)
+            text, abstract = file_data['text'], file_data['abstract']
+
+            text_sentences = self.sent_tokenize(text)
+
+            if self.remove_duplicate_sentences:
+                text_sentences = EntitySalienceLoader._remove_duplicate_sentences(text_sentences)
+
+            # Now filter out sentences using the RSD model
+            if self.rsd_model is not None:
+                scores = self.rsd_model.predict([self.rsd_sent_to_features(sentence) for sentence in text_sentences])
+                scores = scores.data
+                scores = scores[:, 1]
+                text_sentences = [sentence for sentence, score in zip(text_sentences, scores) if
+                                  score >= self.rsd_threshold]
+
+            words, text_sentences = EntitySalienceLoader._insert_markers(text_sentences, self.insert_eos_marker,
+                                                                         self.insert_eop_marker, self.word_tokenize)
+
+            entity_words = self.word_tokenize(example['entity'])
+            example['entity_features'] = [self.word_to_features(word) for word in entity_words]
+            example['entity_words'] = entity_words
+            example['sentences'] = text_sentences
+            example['words'] = words
+            example['sentence_features'] = [[self.word_to_features(word) for word in sentence] for sentence in words]
+
+        return example
