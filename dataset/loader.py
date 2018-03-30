@@ -191,7 +191,13 @@ class EntitySalienceLoader(DatasetMixin):
         ValueError
             When the path is not a valid directory.
         ValueError
-            When the rsd_model is specified, but the rsd_sent_to_features method is not specified.
+            When both the vocab_size and vocab_mapping are specified.
+        ValueError
+            When both the vocab_size and vocab_mapping are not specified.
+        ValueError
+            When vocab_size is specified but illegal (less than 0).
+        ValueError
+            When vocab_mapping is specified but illegal (contains no elements).
         """
         if not os.path.isdir(path):
             raise IOError('The path "%s" is not a directory.' % path)
