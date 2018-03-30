@@ -1,13 +1,13 @@
 import json
 import os
 
+import nltk
 import numpy as np
 from chainer.dataset import DatasetMixin
 from tqdm import tqdm
 
 from dataset.validator import is_valid_esd_json
-from model.relevant_sentence import RSD
-from util.text import compute_sentence_similarity
+from util.text import compute_sentence_similarity, word_to_hash
 
 
 def balance_dataset(dataset: list, key: str, seed: int = 0) -> list:
@@ -150,9 +150,7 @@ class RelevantSentencesLoader(DatasetMixin):
 
 class EntitySalienceLoader(DatasetMixin):
 
-    def __init__(self, path: str, sent_tokenize: callable, word_tokenize: callable, word_to_features: callable,
-                 rsd_model: RSD = None,
-                 rsd_threshold: float = 0.0, rsd_sent_to_features: callable = None, balance: bool = False,
+    def __init__(self, path: str, vocab_size: int = -1, vocab_mapping: dict = None, balance: bool = False,
                  seed: int = 0, max_files: int = -1, remove_duplicate_sentences: bool = True,
                  insert_eos_marker: bool = True, insert_eop_marker: bool = True):
         """The file loader for the dataset files for the entity salience task.
@@ -162,26 +160,13 @@ class EntitySalienceLoader(DatasetMixin):
         path : str
             Path to the folder containing the JSON files.
 
-        sent_tokenize : callable
-            A method which takes a document (text) as input and produces a list of sentences found in the document as
-            output.
+        vocab_size : int, optional
+            The size of the vocabulary. If this is specified, a hashing mechanism is used to compute the hash for each
+            word. Either the vocab_size parameter or vocab_mapping parameter should be set.
 
-        word_tokenize : callable
-            A method which takes a sentence (text) as input and produces a list of words found in the sentence as
-            output.
-
-        word_to_features : callable
-            A method which takes a word as input and produces features (a vector of embedding indices) as output.
-
-        rsd_model : RSD, optional
-            A trained RSD model (default: None).
-
-        rsd_threshold : float, optional
-            The minimum relevance score required for a sentence (predicted by the RSD model). Sentences with a lower
-            predicted relevance score are omitted (default: 0.0, allows all sentences).
-
-        rsd_sent_to_features : callable, optional
-            The sentence-to-features method used for the RSD model (default: None, required when rsd_model is not None).
+        vocab_mapping : dict, optional
+            A dictionary containing a mapping from words (str) to index (int).  Either the vocab_size parameter or
+            vocab_mapping parameter should be set.
 
         balance : bool, optional
             Whether to balance the dataset or not (default: False).
@@ -197,6 +182,9 @@ class EntitySalienceLoader(DatasetMixin):
 
         insert_eos_marker : bool, optional
             When True, an End-of-Sentence (EOS) marker is added to the end of every sentence (default: True).
+
+        insert_eop_marker : bool, optional
+            When True, an End-of-Passes (EOP) marker is added to the end of every document.
 
         Raises
         ------
@@ -215,20 +203,20 @@ class EntitySalienceLoader(DatasetMixin):
         self.dataset = []
 
         # Store the arguments
-        self.sent_tokenize = sent_tokenize
-        self.word_tokenize = word_tokenize
-        self.rsd_model = rsd_model
-        self.rsd_threshold = rsd_threshold
-        self.rsd_sent_to_features = rsd_sent_to_features
+        self.vocab_size = vocab_size
+        self.vocab_mapping = vocab_mapping
         self.insert_eop_marker = insert_eop_marker
         self.insert_eos_marker = insert_eos_marker
         self.remove_duplicate_sentences = remove_duplicate_sentences
-        self.word_to_features = word_to_features
 
-        if self.rsd_model is not None:
-            if self.rsd_sent_to_features is None:
-                raise ValueError(
-                    'The rsd_model is specified, but the rsd_sent_to_features method is not specified.')
+        # Check the vocab arguments
+        if (self.vocab_size == -1 and self.vocab_mapping is None) or (
+                self.vocab_size != -1 and self.vocab_mapping is not None):
+            raise ValueError('Exactly one of vocab_size or vocab_mapping should be set.')
+        if self.vocab_size != -1 and self.vocab_size <= 0:
+            raise ValueError('The vocab_size argument should be positive when specified.')
+        if self.vocab_mapping is not None and len(self.vocab_mapping) == 0:
+            raise ValueError('The vocab_mapping was specified, but it contains no elements.')
 
         progressbar = tqdm(files)
         for file in progressbar:
@@ -243,6 +231,7 @@ class EntitySalienceLoader(DatasetMixin):
                     example = {
                         '_path': file_path,
                         'entity': entity['entity'],
+                        'text': text,
                         'is_salient': entity['salience']
                     }
                     self.dataset.append(example)
@@ -280,37 +269,43 @@ class EntitySalienceLoader(DatasetMixin):
                 unique_sentences.append(sentence)
         return unique_sentences
 
+    def _word_to_feature(self, word: str) -> int:
+        """Converts a word to an identifier.
+
+        Parameters
+        ----------
+        word : str
+            The word to convert.
+
+        Returns
+        -------
+        An identifier (int) which is either computed by a specified vocabulary or by using a hashing vectorizer.
+        """
+        if self.vocab_size != -1:
+            return word_to_hash(word, self.vocab_size)
+        else:
+            return self.vocab_mapping.get(word, self.vocab_mapping.get('unk', 0))
+
     def __len__(self) -> int:
         return len(self.dataset)
 
     def get_example(self, i: int) -> dict:
         example = self.dataset[i]
 
-        with open(example['_path'], 'r') as input_file:
-            file_data = json.load(input_file)
-            text, abstract = file_data['text'], file_data['abstract']
+        text = example['text']
+        text_sentences = nltk.sent_tokenize(text)
 
-            text_sentences = self.sent_tokenize(text)
+        if self.remove_duplicate_sentences:
+            text_sentences = EntitySalienceLoader._remove_duplicate_sentences(text_sentences)
 
-            if self.remove_duplicate_sentences:
-                text_sentences = EntitySalienceLoader._remove_duplicate_sentences(text_sentences)
+        words, text_sentences = EntitySalienceLoader._insert_markers(text_sentences, self.insert_eos_marker,
+                                                                     self.insert_eop_marker, nltk.word_tokenize)
 
-            # Now filter out sentences using the RSD model
-            if self.rsd_model is not None:
-                scores = self.rsd_model.predict([self.rsd_sent_to_features(sentence) for sentence in text_sentences])
-                scores = scores.data
-                scores = scores[:, 1]
-                text_sentences = [sentence for sentence, score in zip(text_sentences, scores) if
-                                  score >= self.rsd_threshold]
-
-            words, text_sentences = EntitySalienceLoader._insert_markers(text_sentences, self.insert_eos_marker,
-                                                                         self.insert_eop_marker, self.word_tokenize)
-
-            entity_words = self.word_tokenize(example['entity'])
-            example['entity_features'] = [self.word_to_features(word) for word in entity_words]
-            example['entity_words'] = entity_words
-            example['sentences'] = text_sentences
-            example['words'] = words
-            example['sentence_features'] = [[self.word_to_features(word) for word in sentence] for sentence in words]
+        entity_words = nltk.word_tokenize(example['entity'])
+        example['entity_features'] = [self._word_to_feature(word) for word in entity_words]
+        example['entity_words'] = entity_words
+        example['sentences'] = text_sentences
+        example['words'] = words
+        example['sentence_features'] = [[self._word_to_feature(word) for word in sentence] for sentence in words]
 
         return example

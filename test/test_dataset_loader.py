@@ -4,8 +4,6 @@ import unittest
 import nltk
 
 from dataset.loader import RelevantSentencesLoader, EntitySalienceLoader
-from model.relevant_sentence import RSD
-from util.text import word_to_hash
 
 
 class TestLoaders(unittest.TestCase):
@@ -72,45 +70,44 @@ class TestEntitySalienceLoader(TestLoaders):
 
     def test_nonexisting_path(self):
         with self.assertRaises(IOError):
-            EntitySalienceLoader(os.path.join(self.resources_path, 'nonexisting_directory'), nltk.sent_tokenize,
-                                 nltk.word_tokenize,
-                                 lambda sent: sent)
+            EntitySalienceLoader(os.path.join(self.resources_path, 'nonexisting_directory'))
 
     def test_max_files(self):
-        loader = EntitySalienceLoader(self.json_path, nltk.sent_tokenize, lambda sent: sent, nltk.word_tokenize,
-                                      max_files=0)
+        loader = EntitySalienceLoader(self.json_path, vocab_size=10, max_files=0)
         self.assertEqual(0, loader.__len__())
 
     def test_example_structure(self):
-        loader = EntitySalienceLoader(self.json_path, nltk.sent_tokenize, nltk.word_tokenize,
-                                      lambda word: word_to_hash(word, 100),
-                                      balance=True)
+        loader = EntitySalienceLoader(self.json_path, vocab_size=100, balance=True)
         # There should be at least one example
         self.assertGreater(loader.__len__(), 0, 'There should be at least one example.')
         for i in range(loader.__len__()):
             example = loader.get_example(i)
-            print(example)
             # Test the structure of the example (this should be tested at least once by one of the first assumptions)
             self.assertTrue('entity_features' in example, 'The example should contain an "entity_features" field.')
             self.assertTrue('sentence_features' in example, 'The example should contain a "sentence_features" field.')
             self.assertTrue('is_salient' in example, 'The example should contain an "is_salient" field.')
             self.assertTrue(type(example['is_salient']) == bool, 'The "is_salient" field should be a boolean.')
 
-    @staticmethod
-    def _sentence_to_features(sentence):
-        return [word_to_hash(word, 10) for word in nltk.word_tokenize(sentence)]
-
-    def test_rsd_model(self):
-        model = RSD(10, 8, 8, 0.5)
-        EntitySalienceLoader(self.json_path, nltk.sent_tokenize, nltk.word_tokenize, lambda sent: sent,
-                             rsd_model=model,
-                             rsd_sent_to_features=TestEntitySalienceLoader._sentence_to_features,
-                             rsd_threshold=0.5)
-
-    def test_rsd_model_no_method_specified(self):
-        model = RSD(8, 8, 8, 0.5)
+    def test_no_vocab_arguments(self):
         with self.assertRaises(ValueError):
-            EntitySalienceLoader(self.json_path, nltk.sent_tokenize, nltk.word_tokenize, lambda sent: sent,
-                                 rsd_model=model,
-                                 rsd_sent_to_features=None,
-                                 rsd_threshold=0.5)
+            EntitySalienceLoader(self.json_path)
+
+    def test_both_vocab_arguments(self):
+        with self.assertRaises(ValueError):
+            EntitySalienceLoader(self.json_path, vocab_size=1, vocab_mapping={'word1': 1})
+
+    def test_illegal_vocab_size(self):
+        with self.assertRaises(ValueError):
+            EntitySalienceLoader(self.json_path, vocab_size=-100)
+
+    def test_illegal_vocab_mapping(self):
+        with self.assertRaises(ValueError):
+            EntitySalienceLoader(self.json_path, vocab_mapping={})
+
+    def test_vocab_mapping(self):
+        mapping = {
+            'text': 1,
+            'dogs': 2
+        }
+        loader = EntitySalienceLoader(self.json_path, vocab_mapping=mapping, balance=False)
+        loader.get_example(0)
