@@ -6,3 +6,4 @@ pandas==0.22.0
 chainer==4.0.0b4
 matplotlib==2.1.2
 numpy==1.14.2
+fnvhash==0.1.0

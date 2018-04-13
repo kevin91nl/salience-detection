@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from dataset.converter import convert_rsd_batch
+from dataset.converter import convert_rsd_batch, convert_entmem_batch
 
 
 class TestRSDConverter(unittest.TestCase):
@@ -21,3 +21,21 @@ class TestRSDConverter(unittest.TestCase):
     def test_invalid_device(self):
         with self.assertRaises(NotImplementedError):
             convert_rsd_batch([], 'Invalid device.')
+
+
+class TestEntMemConverter(unittest.TestCase):
+
+    def test_converter(self):
+        batch = [{'features': [[[1, 2, 3]]], 'is_salient': 0, 'query_entity_features': [1, 1, 1],
+                  'context_entities_features': [1, 1, 1], 'postag_ids': [1, 2, 3], 'word_ids': [1, 2, 3],
+                  'words': [1, 2, 3], 'postags': [1, 2, 3]}]
+        result = convert_entmem_batch(batch)
+        assert 'idx_postags' in result
+        assert 'idx_words' in result
+        assert 'txt_words' in result
+        assert 'txt_postags' in result
+        assert 'is_salient' in result
+
+    def test_invalid_device(self):
+        with self.assertRaises(NotImplementedError):
+            convert_entmem_batch([], 'Invalid device.')

@@ -2,7 +2,7 @@ import unittest
 
 import nltk
 
-from util.text import clean_word, get_bow, compute_sentence_similarity, word_to_hash
+from util.text import clean_word, get_bow, compute_sentence_similarity, word_to_hash, compute_levenshtein_score
 
 
 class TestTextUtils(unittest.TestCase):
@@ -28,3 +28,9 @@ class TestTextUtils(unittest.TestCase):
         # Here, the assumption is that the collision rate is extremely small. In that case, we can assume that
         # hash('word') != hash('different').
         self.assertNotEqual(word_to_hash('word', 100000), word_to_hash('different', 100000))
+
+    def test_levenshtein(self):
+        self.assertEqual(1., compute_levenshtein_score('word', 'word'))
+        self.assertEqual(0., compute_levenshtein_score('', 'word'))
+        self.assertEqual(0., compute_levenshtein_score('word', ''))
+        self.assertEqual(0., compute_levenshtein_score('word', 'test'))

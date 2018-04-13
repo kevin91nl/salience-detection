@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 
 import nltk
@@ -67,47 +68,43 @@ class TestEntitySalienceLoader(TestLoaders):
         super(TestEntitySalienceLoader, self).setUp()
         nltk.download('punkt')
         self.model = EntitySalienceLoader
+        self.cache_path = os.path.join(self.resources_path, 'cache')
+
+    def tearDown(self):
+        if os.path.exists(self.cache_path):
+            shutil.rmtree(self.cache_path)
 
     def test_nonexisting_path(self):
         with self.assertRaises(IOError):
             EntitySalienceLoader(os.path.join(self.resources_path, 'nonexisting_directory'))
 
     def test_max_files(self):
-        loader = EntitySalienceLoader(self.json_path, vocab_size=10, max_files=0)
+        loader = EntitySalienceLoader(self.json_path, word_vocab_size=10, max_files=0)
         self.assertEqual(0, loader.__len__())
 
     def test_example_structure(self):
-        loader = EntitySalienceLoader(self.json_path, vocab_size=100, balance=True)
+        loader = EntitySalienceLoader(self.json_path, word_vocab_size=100, balance=True)
         # There should be at least one example
         self.assertGreater(loader.__len__(), 0, 'There should be at least one example.')
         for i in range(loader.__len__()):
             example = loader.get_example(i)
+
             # Test the structure of the example (this should be tested at least once by one of the first assumptions)
-            self.assertTrue('entity_features' in example, 'The example should contain an "entity_features" field.')
-            self.assertTrue('sentence_features' in example, 'The example should contain a "sentence_features" field.')
+            self.assertTrue('features' in example, 'The example should contain an "features" field.')
             self.assertTrue('is_salient' in example, 'The example should contain an "is_salient" field.')
             self.assertTrue(type(example['is_salient']) == bool, 'The "is_salient" field should be a boolean.')
+            self.assertTrue('postag_ids' in example, 'The example should contain an "postag_ids" field.')
+            self.assertTrue('word_ids' in example, 'The example should contain an "word_ids" field.')
+            self.assertTrue('postag_ids' in example, 'The example should contain an "postag_ids" field.')
+            self.assertTrue('word_ids' in example, 'The example should contain an "word_ids" field.')
 
-    def test_no_vocab_arguments(self):
-        with self.assertRaises(ValueError):
-            EntitySalienceLoader(self.json_path)
+    def test_cache(self):
+        loader = EntitySalienceLoader(self.json_path, word_vocab_size=100, balance=False, cache_path=self.cache_path,
+                                      remove_duplicate_sentences=True)
+        # Load an example
+        result1 = loader.get_example(0)
+        result2 = loader.get_example(0)
 
-    def test_both_vocab_arguments(self):
-        with self.assertRaises(ValueError):
-            EntitySalienceLoader(self.json_path, vocab_size=1, vocab_mapping={'word1': 1})
-
-    def test_illegal_vocab_size(self):
-        with self.assertRaises(ValueError):
-            EntitySalienceLoader(self.json_path, vocab_size=-100)
-
-    def test_illegal_vocab_mapping(self):
-        with self.assertRaises(ValueError):
-            EntitySalienceLoader(self.json_path, vocab_mapping={})
-
-    def test_vocab_mapping(self):
-        mapping = {
-            'text': 1,
-            'dogs': 2
-        }
-        loader = EntitySalienceLoader(self.json_path, vocab_mapping=mapping, balance=False)
-        loader.get_example(0)
+        assert result1 == result2
+        # There should at least exists one file by the caching mechanism
+        assert len(os.listdir(self.cache_path)) > 0
