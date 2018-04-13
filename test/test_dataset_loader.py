@@ -67,6 +67,7 @@ class TestEntitySalienceLoader(TestLoaders):
     def setUp(self):
         super(TestEntitySalienceLoader, self).setUp()
         nltk.download('punkt')
+        nltk.download('averaged_perceptron_tagger')
         self.model = EntitySalienceLoader
         self.cache_path = os.path.join(self.resources_path, 'cache')
 
